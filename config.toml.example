@@ -347,6 +347,9 @@
 # rustc to execute.
 #lld = false
 
+# Indicates whether Clang will be compiled and made available in the sysroot.
+#clang = false
+
 # Whether to deny warnings in crates
 #deny-warnings = true
 

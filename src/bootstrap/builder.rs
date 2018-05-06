@@ -358,7 +358,8 @@ impl<'a> Builder<'a> {
                 native::Llvm,
                 tool::Rustfmt,
                 tool::Miri,
-                native::Lld
+                native::Lld,
+                native::Clang
             ),
             Kind::Check => describe!(
                 check::Std,

@@ -374,7 +374,7 @@ impl Step for Lld {
         run.builder.ensure(Lld { target: run.target });
     }
 
-    /// Compile LLVM for `target`.
+    /// Compile LLD for `target`.
     fn run(self, builder: &Builder) -> PathBuf {
         if builder.config.dry_run {
             return PathBuf::from("lld-out-dir-test-gen");
@@ -421,6 +421,61 @@ impl Step for Lld {
            .profile("Release")
            .env("LLVM_CONFIG_REAL", llvm_config)
            .define("LLVM_CONFIG_PATH", llvm_config_shim)
+           .define("LLVM_INCLUDE_TESTS", "OFF");
+
+        cfg.build();
+
+        t!(File::create(&done_stamp));
+        out_dir
+    }
+}
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct Clang {
+    pub target: Interned<String>,
+}
+
+impl Step for Clang {
+    type Output = PathBuf;
+    const ONLY_HOSTS: bool = true;
+
+    fn should_run(run: ShouldRun) -> ShouldRun {
+        run.path("src/tools/clang")
+    }
+
+    fn make_run(run: RunConfig) {
+        run.builder.ensure(Clang { target: run.target });
+    }
+
+    /// Compile Clang for `target`.
+    fn run(self, builder: &Builder) -> PathBuf {
+        if builder.config.dry_run {
+            return PathBuf::from("clang-out-dir-test-gen");
+        }
+        let target = self.target;
+
+        let llvm_config = builder.ensure(Llvm {
+            target: self.target,
+            emscripten: false,
+        });
+
+        let out_dir = builder.clang_out(target);
+        let done_stamp = out_dir.join("clang-finished-building");
+        if done_stamp.exists() {
+            return out_dir
+        }
+
+        let _folder = builder.fold_output(|| "clang");
+        builder.info(&format!("Building Clang for {}", target));
+        let _time = util::timeit(&builder);
+        t!(fs::create_dir_all(&out_dir));
+
+        let mut cfg = cmake::Config::new(builder.src.join("src/tools/clang"));
+        configure_cmake(builder, target, &mut cfg, true);
+
+        cfg.out_dir(&out_dir)
+           .profile("Release")
+           .define("LLVM_CONFIG", llvm_config)
            .define("LLVM_INCLUDE_TESTS", "OFF");
 
         cfg.build();

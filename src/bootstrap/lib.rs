@@ -552,6 +552,10 @@ impl Build {
         self.out.join(&*target).join("lld")
     }
 
+    fn clang_out(&self, target: Interned<String>) -> PathBuf {
+        self.out.join(&*target).join("clang")
+    }
+
     /// Output directory for all documentation for a target
     fn doc_out(&self, target: Interned<String>) -> PathBuf {
         self.out.join(&*target).join("doc")

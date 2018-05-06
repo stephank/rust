@@ -56,3 +56,6 @@
 [submodule "src/libbacktrace"]
 	path = src/libbacktrace
 	url = https://github.com/rust-lang-nursery/libbacktrace
+[submodule "src/tools/clang"]
+	path = src/tools/clang
+	url = https://github.com/llvm-mirror/clang.git

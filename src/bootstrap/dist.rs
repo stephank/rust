@@ -503,6 +503,22 @@ impl Step for Rustc {
                 builder.copy(&src, &dst);
             }
 
+            // Copy over clang if it's there
+            if builder.config.clang_enabled {
+                let exe = exe("clang", &compiler.host);
+                let src = builder.sysroot_libdir(compiler, host)
+                    .parent()
+                    .unwrap()
+                    .join("bin")
+                    .join(&exe);
+                let dst = image.join("lib/rustlib")
+                    .join(&*host)
+                    .join("bin")
+                    .join(&exe);
+                t!(fs::create_dir_all(&dst.parent().unwrap()));
+                builder.copy(&src, &dst);
+            }
+
             // Man pages
             t!(fs::create_dir_all(image.join("share/man/man1")));
             let man_src = builder.src.join("src/doc/man");

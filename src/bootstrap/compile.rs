@@ -790,6 +790,21 @@ fn copy_lld_to_sysroot(builder: &Builder,
     builder.copy(&lld_install_root.join("bin").join(&exe), &dst.join(&exe));
 }
 
+fn copy_clang_to_sysroot(builder: &Builder,
+                       target_compiler: Compiler,
+                       clang_install_root: &Path) {
+    let target = target_compiler.host;
+
+    let dst = builder.sysroot_libdir(target_compiler, target)
+        .parent()
+        .unwrap()
+        .join("bin");
+    t!(fs::create_dir_all(&dst));
+
+    let exe = exe("clang", &target);
+    builder.copy(&clang_install_root.join("bin").join(&exe), &dst.join(&exe));
+}
+
 /// Cargo's output path for the standard library in a given stage, compiled
 /// by a particular compiler for the specified target.
 pub fn libstd_stamp(builder: &Builder, compiler: Compiler, target: Interned<String>) -> PathBuf {
@@ -947,6 +962,14 @@ impl Step for Assemble {
             None
         };
 
+        let clang_install = if builder.config.clang_enabled {
+            Some(builder.ensure(native::Clang {
+                target: target_compiler.host,
+            }))
+        } else {
+            None
+        };
+
         let stage = target_compiler.stage;
         let host = target_compiler.host;
         builder.info(&format!("Assembling stage{} compiler ({})", stage, host));
@@ -968,6 +991,9 @@ impl Step for Assemble {
                                          target_compiler);
         if let Some(lld_install) = lld_install {
             copy_lld_to_sysroot(builder, target_compiler, &lld_install);
+        }
+        if let Some(clang_install) = clang_install {
+            copy_clang_to_sysroot(builder, target_compiler, &clang_install);
         }
 
         // Link the compiler binary itself into place
